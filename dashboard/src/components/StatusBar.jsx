@@ -319,7 +319,7 @@ export default function StatusBar({
               )}
             </form>
             {latestHint ? <div className="session-picker__hint">{latestHint}</div> : null}
-            <RecentSessionsList onSelect={handleSelectRecentSession} />
+            <RecentSessionsList onSelect={handleSelectRecentSession} currentSessionId={selectedSessionId} onClearCurrent={handleStop} />
             <SetupHooksCard />
           </div>
         )}

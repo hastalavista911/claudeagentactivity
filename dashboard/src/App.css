@@ -487,6 +487,23 @@
   color: var(--text-muted);
 }
 
+/* Marks the row for the session_id already being watched -- blue like the
+   rest of this app's "currently active" accents (e.g.
+   server-switcher__toggle--custom), not danger-red, since it's just
+   informational (not a warning by itself). */
+.recent-sessions__watching-badge {
+  display: inline-block;
+  margin-right: 5px;
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .recent-sessions__delete {
   /* padding-left EXACTLY matches .recent-sessions__row-main (6px) --
      previously there was an EXTRA margin-left here, shifting the text

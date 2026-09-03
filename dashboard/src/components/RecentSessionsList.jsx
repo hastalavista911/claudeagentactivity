@@ -31,7 +31,7 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function RecentSessionsList({ onSelect }) {
+export default function RecentSessionsList({ onSelect, currentSessionId, onClearCurrent }) {
   const { t } = useI18n();
   const [sessions, setSessions] = useState(null); // null = still loading
   const [error, setError] = useState(false);
@@ -66,6 +66,17 @@ export default function RecentSessionsList({ onSelect }) {
     try {
       await fetch(`${HTTP_BASE}/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
       setSessions((prev) => (prev ? prev.filter((s) => s.session_id !== sessionId) : prev));
+      // Clearing the session CURRENTLY being watched has no visible effect
+      // otherwise -- the dashboard's own panels (Overview/Activity Flow/
+      // etc.) are driven by client-side state already streamed in, not
+      // re-fetched from the server after a delete, and a still-live
+      // session just gets silently recreated on its next event anyway
+      // (see the deleteSession() note in session-store.js). Confirmed
+      // report 2026-09-03: "setelah saya confirm clear session, saya tidak
+      // melihat perubahan apa yang terjadi" -- turned out to be exactly
+      // this case. Stop watching it too, so the action visibly does
+      // something: the user is dropped back to the session picker.
+      if (sessionId === currentSessionId) onClearCurrent?.();
     } catch {
       // Ignore -- if it fails, the row just stays in the list (not removed
       // from the view), the user can try again. Not a critical action that
@@ -98,6 +109,7 @@ export default function RecentSessionsList({ onSelect }) {
       <div className="recent-sessions__list">
         {sessions.map((s) => {
           const isConfirming = confirmDeleteId === s.session_id;
+          const isCurrent = s.session_id === currentSessionId;
           return (
             <div key={s.session_id} className="recent-sessions__row">
               {/* This whole row used to be ONE <button> -- now split into
@@ -113,9 +125,16 @@ export default function RecentSessionsList({ onSelect }) {
                   {s.session_id.slice(0, 16)}…
                 </code>
                 {isConfirming ? (
-                  <span className="recent-sessions__confirm-text">{t("recentSessions.confirmDelete")}</span>
+                  <span className="recent-sessions__confirm-text">
+                    {t(isCurrent ? "recentSessions.confirmDeleteCurrent" : "recentSessions.confirmDelete")}
+                  </span>
                 ) : (
                   <span className="recent-sessions__meta">
+                    {/* Marks the row that's the SAME session_id the user is
+                        already watching -- clearing it stops watching too
+                        (see onClearCurrent above), the badge sets that
+                        expectation upfront instead of surprising them. */}
+                    {isCurrent ? <span className="recent-sessions__watching-badge">{t("recentSessions.watchingBadge")}</span> : null}
                     {s.eventCount} {t("recentSessions.events")}
                     {typeof s.sizeBytes === "number" ? ` · ${formatSize(s.sizeBytes)}` : ""}
                     {s.cwd ? ` · ${shortenPath(s.cwd, 26)}` : ""}

@@ -48,8 +48,10 @@ export const translations = {
     "recentSessions.clearTooltip": "Hapus sesi ini dari server",
     "recentSessions.clearLabel": "Hapus sesi ini",
     "recentSessions.confirmDelete": "Hapus sesi ini dari server? (transkrip asli di disk tidak terpengaruh)",
+    "recentSessions.confirmDeleteCurrent": "Hapus sesi ini dari server? Kamu sedang menonton sesi ini -- setelah dihapus, kamu otomatis berhenti menonton.",
     "recentSessions.confirmDeleteYes": "Ya, hapus",
     "recentSessions.confirmDeleteCancel": "Batal",
+    "recentSessions.watchingBadge": "sedang ditonton",
 
     // SetupHooksCard
     "setup.hooks.installed": "Hooks Claude Code sudah terpasang.",
@@ -324,8 +326,10 @@ export const translations = {
     "recentSessions.clearTooltip": "Clear this session from the server",
     "recentSessions.clearLabel": "Clear this session",
     "recentSessions.confirmDelete": "Clear this session from the server? (the real transcript on disk is untouched)",
+    "recentSessions.confirmDeleteCurrent": "Clear this session from the server? You're currently watching it -- clearing it will stop watching automatically.",
     "recentSessions.confirmDeleteYes": "Yes, clear it",
     "recentSessions.confirmDeleteCancel": "Cancel",
+    "recentSessions.watchingBadge": "watching",
 
     // SetupHooksCard
     "setup.hooks.installed": "Claude Code hooks are installed.",
