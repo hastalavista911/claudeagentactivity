@@ -1,0 +1,3392 @@
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- AppPreloader -- brief overlay while resumeLastSession() runs --- */
+
+.app-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--bg);
+}
+
+.app-preloader__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-preloader__bar-track {
+  position: relative;
+  width: 220px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.app-preloader__percent {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  /* Fixed width (not content-based) -- the number changes 0/33/67/100, if
+     the width shrank/grew with each digit change, the bar next to it
+     would visibly shift a little on each update (small, but noticeably
+     distracting). */
+  min-width: 30px;
+}
+
+.app-preloader__bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 2px;
+  background: #60a5fa;
+  /* DELIBERATELY NO CSS `transition` -- tried (0.6s, then 0.15s) to make
+     the jump between checkpoints (0/33/67/100) look like it's flowing,
+     BUT the percentage number next to it (.app-preloader__percent) updates
+     INSTANTLY without a transition, so it always looked like it jumped
+     ahead of the bar (user report 2026-09-03, tried twice). The
+     smoothness now comes from JS instead (see AppPreloader.jsx --
+     requestAnimationFrame animates a SINGLE `display` value shared by both
+     the bar & the number), not from CSS -- that's why `width` here is set
+     directly from an inline style with no transition, so it doesn't get
+     animated "twice" (CSS + JS together would just add extra lag).
+  */
+}
+
+.app-preloader__text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* --- status bar --- */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.status-bar__title {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.status-bar__version {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.status-bar__help {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.status-bar__help:hover {
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+.status-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.status-bar__item--grow {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-bar__export {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.status-bar__export:hover {
+  border-color: #898781;
+}
+
+.language-switcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 22px 5px 9px;
+  flex-shrink: 0;
+}
+
+.language-switcher:hover {
+  border-color: #898781;
+}
+
+.language-switcher__icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.language-switcher__select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.language-switcher__select:focus {
+  outline: none;
+}
+
+.language-switcher__select option {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.language-switcher__chevron {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* --- ServerSwitcher -- switch Agent Server without restarting Vite --- */
+
+.server-switcher {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.server-switcher__toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  height: 26px;
+  padding: 0 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.server-switcher__toggle:hover {
+  border-color: #898781;
+  color: var(--text);
+}
+
+.server-switcher__host-label {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* PERMANENT indicator (not a one-time notice) for when connected to a
+   non-default server -- visible at a glance any time without opening the popover. */
+.server-switcher__toggle--custom {
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+.server-switcher__popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.server-switcher__advanced-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: rgba(250, 178, 25, 0.1);
+  border: 1px solid rgba(250, 178, 25, 0.3);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: #fab219;
+  margin-bottom: 2px;
+}
+.server-switcher__advanced-badge svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.server-switcher__advanced-badge-title {
+  font-size: 11px;
+  font-weight: 600;
+}
+.server-switcher__advanced-badge-text {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.server-switcher__current {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+.server-switcher__current code {
+  color: var(--text);
+}
+
+.server-switcher__label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.server-switcher__input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.server-switcher__hint {
+  margin: 2px 0 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.server-switcher__error {
+  margin: -2px 0 6px;
+  font-size: 10px;
+  color: #f87171;
+  line-height: 1.5;
+}
+
+.server-switcher__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.server-switcher__button {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 6px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.server-switcher__button:hover:not(:disabled) {
+  border-color: #898781;
+}
+.server-switcher__button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.server-switcher__button--primary {
+  background: #60a5fa;
+  border-color: transparent;
+  color: #0b1120;
+  font-weight: 700;
+}
+.server-switcher__button--primary:hover:not(:disabled) {
+  border-color: transparent;
+  filter: brightness(1.1);
+}
+
+/* --- session picker (second row below the status bar) --- */
+
+.session-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.session-picker__mode {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.session-picker__mode--error {
+  color: #f87171;
+}
+
+.session-picker__form-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+.session-picker__form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.session-picker__hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* --- RecentSessionsList -- see components/RecentSessionsList.jsx --- */
+
+.recent-sessions {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.recent-sessions--empty {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.recent-sessions__title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.recent-sessions__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+/* .recent-sessions__row used to be a single <button> by itself -- now it's
+   a wrapping <div> containing TWO buttons (watch + delete, see
+   RecentSessionsList.jsx), since HTML disallows nested <button>s.
+   DEFAULT (desktop) -- column layout: the delete button (text "Hapus"/
+   "Clear" ONLY, icon hidden) appears BELOW .recent-sessions__row-main
+   (which holds the id + meta). Tablet/mobile (see the 1024px media query
+   below) -- switched back to a horizontal row with a plain icon on the
+   right (the previous existing behavior, deliberately KEPT at that size --
+   user request 2026-09-03: "keep it that way for mobile"). */
+.recent-sessions__row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border-radius: 4px;
+}
+.recent-sessions__row:hover {
+  background: var(--bg-elevated);
+}
+
+.recent-sessions__row-main {
+  /* DELIBERATELY not `flex: 1` -- that makes this button stretch to fill
+     the full row width, pushing the delete button next to it far off to
+     the right edge (earlier user report 2026-09-03). `flex: 0 1 auto` --
+     sized to content (id + meta), allowed to shrink when tight, but never
+     forced to stretch. */
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  background: none;
+  border: none;
+  padding: 5px 6px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.recent-sessions__id {
+  font-size: 11px;
+  color: #60a5fa;
+}
+
+.recent-sessions__meta {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.recent-sessions__delete {
+  /* padding-left EXACTLY matches .recent-sessions__row-main (6px) --
+     previously there was an EXTRA margin-left here, shifting the text
+     further right than the session_id/meta above it (user report
+     2026-09-03, screenshot showed "Clear this session" misaligned). Only
+     the bottom margin is kept (spacing to the next session row). */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px 0 6px;
+  margin: 0 0 4px 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  /* Danger color from the start (not only on hover) -- the text itself
+     already says "Clear this session", the color needs to immediately
+     signal that this action is destructive without waiting for a hover. */
+  color: #d03b3b;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.recent-sessions__delete:hover {
+  background: rgba(208, 59, 59, 0.15);
+  color: #d03b3b;
+}
+
+/* Desktop (default): icon hidden, only the "Hapus"/"Clear" text is shown
+   (user request 2026-09-03). Tablet/mobile flips both via the 1024px
+   media query below. */
+.recent-sessions__delete-icon {
+  display: none;
+}
+.recent-sessions__delete-label {
+  display: inline;
+}
+
+.recent-sessions__confirm-text {
+  font-size: 10px;
+  color: #d03b3b;
+  line-height: 1.4;
+}
+
+.recent-sessions__confirm-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  margin: 0 0 4px 6px;
+  padding-left: 0;
+}
+
+.recent-sessions__confirm-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 4px 8px;
+  font-size: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.recent-sessions__confirm-btn:hover:not(:disabled) {
+  border-color: #898781;
+}
+.recent-sessions__confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.recent-sessions__confirm-btn--danger {
+  background: #d03b3b;
+  border-color: #d03b3b;
+  color: #fff;
+  font-weight: 600;
+}
+.recent-sessions__confirm-btn--danger:hover:not(:disabled) {
+  background: #b52f2f;
+  border-color: #b52f2f;
+}
+
+/* --- SetupHooksCard -- see components/SetupHooksCard.jsx --- */
+
+.setup-hooks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.setup-hooks--ok {
+  color: #4ade80;
+}
+
+.setup-hooks__status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.setup-hooks__button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.setup-hooks__button:hover:not(:disabled) {
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+.setup-hooks__button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.setup-hooks__error {
+  color: #f87171;
+}
+
+.session-picker__input {
+  flex: 1;
+  min-width: 120px;
+  max-width: 420px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.session-picker__input:focus {
+  outline: 1px solid #898781;
+  outline-offset: -1px;
+}
+
+.session-picker__button {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.session-picker__button:hover:not(:disabled) {
+  border-color: #898781;
+}
+
+.session-picker__button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  background: var(--border);
+  color: var(--text);
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+/* --- grid layout (2 rows: overview/flow/details, then terminal/code/tree) --- */
+
+.app__content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  /* Outer frame -- the right side (Chat) & top (status bar) already have
+     their own border, but the left & bottom sides of the whole grid canvas
+     sat flush against the viewport edge with no line at all, unlike the
+     mockup which frames every side. */
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.app__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* Same trick as the gap inside .app__grid itself (the background shows
+     through the gap as a "border" between panels) -- but a different
+     container here, so the top row (Overview/Activity Flow/Details) & the
+     bottom row (Terminal/Git/Placeholder) previously sat flush with no
+     separator line at all. The user's layout mockup (2026-09-02) shows a
+     border on EVERY side of each box, including this horizontal line. */
+  gap: 1px;
+  background: var(--border);
+}
+
+.app__grid {
+  /* Larger flex-grow than the bottom row -- Activity Flow (including the
+     graph inside it) is the dashboard's main visual element, deliberately
+     given a larger height & width share than the bottom row (Terminal/Git). */
+  flex: 1.5;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 240px 1.5fr 300px;
+  gap: 1px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.app__grid--bottom {
+  flex: 1;
+  min-height: 0;
+  /* Now 3 columns, aligned with the top row (240px Overview+ActivityFlow
+     combined | 1.5fr ActivityFlow | 300px Details) -- see the user's
+     layout mockup 2026-09-02: Terminal & Git share the remaining width
+     (same ratio as before, 0.55fr:1.45fr), then a 3rd 300px column for
+     InsightsPanel so its right edge visually aligns with the Details
+     column in the top row. */
+  grid-template-columns: 0.7fr 1.3fr 300px;
+}
+
+/* --- InsightsPanel (formerly PlaceholderPanel -- now 4 tabs: Files/Cost/
+   Alerts/Tests, see components/InsightsPanel.jsx). The tab bar & body reuse
+   the same .git-tabs/.git-panel__body classes as GitPanel for visual
+   consistency, so only a little extra panel-specific styling is needed
+   here. --- */
+
+.insights-tabs .git-tabs__tab {
+  /* 4 tabs in a 300px column narrower than GitPanel's (3 tabs) -- shrink
+     the padding a bit so the labels still fit without wrapping. */
+  padding: 5px 7px;
+}
+
+.insights-files__meta {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.insights-cost__value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.insights-cost__disclaimer {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin: 4px 0 10px;
+  line-height: 1.5;
+}
+
+.insights-cost__breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.insights-cost__breakdown > div {
+  display: flex;
+  justify-content: space-between;
+}
+.insights-cost__breakdown span {
+  color: var(--text);
+}
+
+.insights-alerts__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+  background: var(--text-muted);
+}
+.insights-alerts__dot--success {
+  background: #4ade80;
+}
+.insights-alerts__dot--error {
+  background: #f87171;
+}
+.insights-alerts__dot--info {
+  background: #60a5fa;
+}
+
+.insights-tests {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.insights-tests__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.insights-tests__row--pass {
+  color: #4ade80;
+}
+.insights-tests__row--fail {
+  color: #f87171;
+}
+
+.panel {
+  background: var(--bg);
+  padding: 12px 14px;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel__title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel__header .panel__title {
+  margin: 0;
+}
+
+.panel__subtitle {
+  margin: 14px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.panel__empty {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 12px 0;
+}
+
+.panel__empty--error {
+  color: #d03b3b;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #0ca30c;
+  font-weight: 600;
+}
+
+.live-badge--muted {
+  color: var(--text-muted);
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-opacity 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-opacity {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* --- Chat panel (a session started DIRECTLY from the dashboard, server/chat.js) --- */
+
+.chat-panel {
+  width: 340px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  min-height: 0;
+}
+
+.chat-panel__header {
+  flex-shrink: 0;
+}
+
+.chat-panel__header .panel__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Wraps the "no chat yet" state (empty-state / StartChatForm) -- its
+   content is naturally short & top-aligned, leaving the rest of the
+   panel's height (which can be tall when a neighboring panel is tall)
+   looking empty/cut off. Fill that space by vertically centering the
+   content so it looks deliberate, not like an empty layout bug. */
+.chat-panel__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.chat-panel__body .chat-start-form {
+  width: 100%;
+}
+
+.chat-panel__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.chat-bubble {
+  max-width: 92%;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.chat-bubble--user {
+  align-self: flex-end;
+  background: rgba(96, 165, 250, 0.15);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+}
+
+.chat-bubble--assistant {
+  align-self: flex-start;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.chat-bubble__role {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.chat-bubble__text {
+  /* pre-wrap is DELIBERATELY no longer used -- the content is now real
+     HTML from react-markdown (p/ul/li/etc.), the paragraphs & lists
+     already manage their own spacing. pre-wrap would preserve the
+     newline whitespace from the SOURCE markdown inside block elements,
+     causing unnecessary extra spacing. */
+  word-break: break-word;
+}
+
+/* --- Markdown inside the chat bubble (react-markdown, see ChatMarkdown.jsx) --- */
+
+.chat-bubble__text p {
+  margin: 0 0 8px;
+}
+.chat-bubble__text p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-bubble__text h1,
+.chat-bubble__text h2,
+.chat-bubble__text h3,
+.chat-bubble__text h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 10px 0 6px;
+}
+.chat-bubble__text h1:first-child,
+.chat-bubble__text h2:first-child,
+.chat-bubble__text h3:first-child,
+.chat-bubble__text h4:first-child {
+  margin-top: 0;
+}
+
+.chat-bubble__text ul,
+.chat-bubble__text ol {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+.chat-bubble__text li {
+  margin: 2px 0;
+}
+
+.chat-bubble__text a {
+  color: #60a5fa;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chat-bubble__text blockquote {
+  margin: 6px 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+  color: var(--text-muted);
+}
+
+.chat-bubble__text table {
+  border-collapse: collapse;
+  margin: 6px 0;
+  font-size: 11px;
+  display: block;
+  overflow-x: auto;
+}
+.chat-bubble__text th,
+.chat-bubble__text td {
+  border: 1px solid var(--border);
+  padding: 3px 6px;
+  text-align: left;
+}
+
+.chat-md-code-inline {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+}
+
+.chat-bubble__text pre {
+  background: #0b1120;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  overflow-x: auto;
+}
+
+.chat-md-code-block {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  white-space: pre;
+}
+
+.chat-bubble__text-wrap {
+  position: relative;
+}
+
+.chat-bubble__text--collapsed {
+  max-height: 160px;
+  overflow: hidden;
+  position: relative;
+}
+
+.chat-bubble__text--collapsed::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36px;
+  pointer-events: none;
+}
+
+/* The gradient follows each bubble's own background color (different
+   between user/assistant) -- color-mix() computes the blended color of the
+   user bubble's transparent blue overlay on top of --bg, so the transition
+   is genuinely smooth instead of just guessing a solid color. */
+.chat-bubble--assistant .chat-bubble__text--collapsed::after {
+  background: linear-gradient(to bottom, transparent, var(--bg-elevated));
+}
+
+.chat-bubble--user .chat-bubble__text--collapsed::after {
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, #60a5fa 15%, var(--bg)));
+}
+
+.chat-bubble__toggle {
+  display: block;
+  margin-top: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #60a5fa;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.chat-bubble__toggle:hover {
+  text-decoration: underline;
+}
+
+/* "Floating" version -- sits centered within the gradient area itself,
+   rather than below the text as a separate line. A dark semi-transparent
+   background is used EQUALLY for both bubble kinds (not a per-bubble
+   color-mix) -- on top of the already-faded gradient, this small dark pill
+   still reads clearly on both user and assistant bubbles without needing
+   to be recomputed per color. */
+.chat-bubble__toggle--overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  margin-top: 0;
+  background: rgba(11, 17, 32, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 3px 12px;
+  backdrop-filter: blur(3px);
+  white-space: nowrap;
+}
+
+.chat-bubble__toggle--overlay:hover {
+  background: rgba(11, 17, 32, 0.85);
+  text-decoration: none;
+}
+
+.chat-panel__typing {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.chat-panel__typing svg {
+  flex-shrink: 0;
+}
+
+.chat-panel__typing-detail {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.chat-spinner {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: chat-spin 0.7s linear infinite;
+}
+
+@keyframes chat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.chat-panel__input-row {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+
+.chat-panel__input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 7px 9px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.chat-panel__input:disabled {
+  opacity: 0.6;
+}
+
+.chat-panel__send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  flex-shrink: 0;
+  background: #60a5fa;
+  border: none;
+  border-radius: 4px;
+  color: #0b1120;
+  cursor: pointer;
+}
+
+.chat-panel__send:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat-start-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-start-form__hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 6px;
+}
+
+.chat-start-form__label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.chat-start-form__input,
+.chat-start-form__textarea {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 7px 9px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.chat-start-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-top: 6px;
+  cursor: pointer;
+}
+
+.chat-start-form__hint--warn {
+  color: #fab219;
+  margin: 2px 0 0;
+}
+
+.chat-start-form__button {
+  margin-top: 8px;
+  background: #60a5fa;
+  border: none;
+  border-radius: 4px;
+  color: #0b1120;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.chat-start-form__button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat-start-form__error {
+  color: #d03b3b;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+/* --- Command Approval mode selector (opt-in per session): Off / Manual / Auto --- */
+
+.approval-mode {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.approval-mode__confirm {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: 260px;
+  background: var(--bg-elevated);
+  border: 1px solid #d03b3b;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.approval-mode__confirm-text {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.approval-mode__confirm-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.approval-mode__confirm-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 6px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.approval-mode__confirm-btn:hover {
+  border-color: #898781;
+}
+.approval-mode__confirm-btn--primary {
+  background: #d03b3b;
+  border-color: #d03b3b;
+  color: #fff;
+  font-weight: 600;
+}
+.approval-mode__confirm-btn--primary:hover {
+  background: #b52f2f;
+  border-color: #b52f2f;
+}
+
+.approval-mode__label {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.approval-mode__group {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.approval-mode__btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-elevated);
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+.approval-mode__btn:last-child {
+  border-right: none;
+}
+
+.approval-mode__btn:hover {
+  color: var(--text);
+}
+
+/* Manual active: orange/warning accent (#fab219, same one used by other
+   warn elements in this app -- server-switcher__advanced-badge,
+   chat-start-form__hint--warn) -- "be careful, Claude Code's normal
+   behavior changes", not "danger". Red is reserved SPECIFICALLY for Auto
+   (the riskiest mode -- it never pauses at all), to stay consistent with
+   its own confirmation popover's color (see .approval-mode__confirm, user
+   request 2026-09-03). Auto active: still keeps the blue "on" status
+   accent, red is only used at the confirmation moment (an action, not a
+   permanent status). */
+.approval-mode__btn--manual.approval-mode__btn--active {
+  background: rgba(250, 178, 25, 0.2);
+  color: #fab219;
+}
+
+.approval-mode__btn--auto.approval-mode__btn--active {
+  background: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+}
+
+.approval-mode__btn--off.approval-mode__btn--active {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* "AUTO" badge -- attached next to the label of an event that passed
+   through without pausing via Auto mode (see lib/eventToNode.js
+   "permission.auto"), so there's still a visible trace even though no
+   manual one-by-one approval was requested. */
+.badge-auto {
+  margin-left: 4px;
+  background: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+/* --- permission request card (Option B -- real approve/deny) --- */
+
+.permission-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(208, 59, 59, 0.1);
+  border-bottom: 1px solid #d03b3b;
+  flex-shrink: 0;
+}
+
+.permission-card__icon {
+  color: #d03b3b;
+  flex-shrink: 0;
+}
+
+.permission-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.permission-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.permission-card__detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.permission-card__timeout {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #d03b3b;
+  text-align: right;
+}
+
+.permission-card__timeout-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.permission-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.permission-card__button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.permission-card__button--allow {
+  background: #0ca30c;
+  color: #052e16;
+}
+
+.permission-card__button--deny {
+  background: transparent;
+  border: 1px solid #d03b3b;
+  color: #d03b3b;
+}
+
+/* --- notification banner (read-only mirror of the Notification hook) --- */
+
+.notification-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(250, 178, 25, 0.1);
+  border-bottom: 1px solid #fab219;
+  font-size: 12px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.notification-banner__icon {
+  color: #fab219;
+  flex-shrink: 0;
+}
+
+.notification-banner__text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-banner__hint {
+  color: var(--text-muted);
+  font-size: 11px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* --- ServerSwitchNotice -- a one-time confirmation banner shown right
+   after switching servers, see components/ServerSwitchNotice.jsx. Green/
+   blue tint (not yellow/red like notification/permission) because this is
+   GOOD NEWS (success confirmation), not a warning. --- */
+
+.server-switch-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(74, 222, 128, 0.1);
+  border-bottom: 1px solid #4ade80;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.server-switch-notice__icon {
+  color: #4ade80;
+  flex-shrink: 0;
+}
+
+.server-switch-notice__text {
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.server-switch-notice__hint {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* --- Agent Overview (left panel) --- */
+
+.activity-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid #fab219;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.activity-card--idle {
+  border-left-color: var(--border);
+}
+
+.activity-card__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fab219;
+}
+
+.activity-card--idle .activity-card__label {
+  color: var(--text-muted);
+}
+
+.activity-card__sub {
+  font-size: 12px;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-card__elapsed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.stat-tile__icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.stat-tile__value {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.stat-tile__label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.mini-timeline {
+  display: block;
+}
+
+.context-bar-wrap {
+  margin-bottom: 14px;
+}
+
+.context-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.context-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.context-bar__label {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.context-bar__caption {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.changed-files {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.changed-files__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.changed-files__row:hover {
+  border-color: #898781;
+}
+
+.changed-files__icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.changed-files__path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changed-files__stats {
+  flex-shrink: 0;
+  display: flex;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.changed-files__stats--muted {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.changed-files__added {
+  color: #0ca30c;
+}
+
+.changed-files__removed {
+  color: #d03b3b;
+}
+
+.session-summary {
+  margin-top: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid #0ca30c;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.session-summary__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.session-summary__badge {
+  background: #0ca30c;
+  color: #052e16;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.session-summary__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.session-summary__row span:first-child {
+  color: var(--text-muted);
+}
+
+.session-summary__outcome {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.session-summary__outcome--success {
+  color: #0ca30c;
+}
+.session-summary__outcome--error {
+  color: #d03b3b;
+}
+
+.session-summary__finished {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.usage-5h {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.usage-5h__value {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.usage-5h__sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.usage-5h__caption {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* --- Activity Flow (middle panel) --- */
+
+.panel__title-count {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.flow-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 8px;
+  margin: 8px 0 6px;
+}
+
+.flow-search__icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.flow-search__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.flow-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.flow-filter {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.flow-filter:hover {
+  border-color: #898781;
+  color: var(--text);
+}
+
+.flow-filter--active {
+  color: var(--bg);
+  font-weight: 700;
+  border-color: transparent;
+}
+
+.flow-filter--active.flow-filter--all {
+  background: #898781;
+}
+.flow-filter--active.flow-filter--thinking {
+  background: #fab219;
+}
+.flow-filter--active.flow-filter--run {
+  background: #60a5fa;
+}
+.flow-filter--active.flow-filter--complete {
+  background: #0ca30c;
+}
+.flow-filter--active.flow-filter--error {
+  background: #d03b3b;
+}
+
+.event-list--empty {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 12px 0;
+}
+
+.flow-panel__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+}
+
+.event-list {
+  width: 180px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.event-list__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--edge-color);
+  border-radius: 4px;
+  padding: 5px 7px;
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.event-list__row:hover {
+  border-color: #898781;
+}
+
+.event-list__row--running {
+  border-left-color: #fab219;
+}
+.event-list__row--success {
+  border-left-color: #0ca30c;
+}
+.event-list__row--error {
+  border-left-color: #d03b3b;
+}
+.event-list__row--info {
+  border-left-color: #898781;
+}
+
+.event-list__row--selected {
+  outline: 2px solid #60a5fa;
+  outline-offset: -1px;
+  background: rgba(96, 165, 250, 0.12);
+}
+
+.event-list__icon {
+  flex-shrink: 0;
+}
+
+.event-list__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-list__time {
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.event-list__current-badge {
+  margin-left: 6px;
+  background: #0ca30c;
+  color: #052e16;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.flow-panel__graph {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.activity-node__current-badge {
+  position: absolute;
+  top: -8px;
+  right: 6px;
+  background: #0ca30c;
+  color: #052e16;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* A plain 2px ring turned out to be easy to miss against the node's own
+   status-color border (e.g. green "Complete") -- strengthened into a
+   thicker ring + glow, and the node "lifts" slightly (scale) so it's
+   clearly visible which one was just clicked, instead of only a few
+   pixels different from an unselected one. */
+.activity-node--selected {
+  box-shadow:
+    0 0 0 3px #60a5fa,
+    0 0 14px 3px rgba(96, 165, 250, 0.55);
+  transform: scale(1.03);
+  z-index: 5;
+}
+
+/* Hover: affordance BEFORE the click -- this node really is clickable,
+   without needing to click first to find out. (The base cursor/transition
+   lives in the main .activity-node block below, near its width/background
+   definition.) */
+.activity-node:hover:not(.activity-node--selected) {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 1.5px rgba(96, 165, 250, 0.6);
+}
+
+/* Small "you clicked this" marker -- top-left corner, doesn't collide with
+   the "current" badge (top-right corner) if this same node also happens to
+   be the last node. */
+.activity-node__selected-badge {
+  position: absolute;
+  top: -8px;
+  left: 6px;
+  background: #60a5fa;
+  color: #0b1120;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* --- Details (right panel) --- */
+
+.panel__header-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.details-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--edge-color);
+  background: var(--bg-elevated);
+}
+
+.details-headline--running {
+  border-left-color: #fab219;
+}
+.details-headline--success {
+  border-left-color: #0ca30c;
+}
+.details-headline--error {
+  border-left-color: #d03b3b;
+}
+.details-headline--info {
+  border-left-color: #898781;
+}
+
+.details-headline__time {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.details-field {
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.details-field__label {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.details-field__value {
+  word-break: break-word;
+}
+
+.details-changes--add {
+  color: #0ca30c;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.category-badge--git {
+  border-color: #f97316;
+  color: #f97316;
+}
+.category-badge--npm {
+  border-color: #d03b3b;
+  color: #d03b3b;
+}
+.category-badge--node {
+  border-color: #0ca30c;
+  color: #0ca30c;
+}
+.category-badge--python {
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+.category-badge--docker {
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+.category-badge--test {
+  border-color: #fab219;
+  color: #fab219;
+}
+.category-badge--shell {
+  border-color: #898781;
+  color: #898781;
+}
+
+.agent-thought {
+  background: var(--bg-elevated);
+  border-left: 3px solid #898781;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.details-changes--remove {
+  color: #d03b3b;
+}
+
+.details-output {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 11px;
+  max-height: 140px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.details-open-vscode {
+  display: inline-block;
+  margin-top: 12px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  text-align: center;
+  padding: 7px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.details-open-vscode:hover {
+  background: #1d4ed8;
+}
+
+/* --- diff preview --- */
+
+.diff-preview {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  overflow-x: auto;
+}
+
+.diff-preview__hunk-header {
+  color: var(--text-muted);
+  padding: 4px 8px;
+}
+
+.diff-preview__line {
+  padding: 0 8px;
+  white-space: pre;
+}
+
+.diff-preview__line--add {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.diff-preview__line--remove {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.diff-preview__line--ctx {
+  color: var(--text-muted);
+}
+
+/* --- Terminal / Log Output --- */
+
+/* "Debug mode" toggle -- small switch + label, its active color is neutral
+   (light gray) not red -- this is just a display preference, not something
+   risky like Command Approval (see .approval-mode above). */
+.debug-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.debug-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.debug-toggle__slider {
+  position: relative;
+  width: 26px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.debug-toggle__slider::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.debug-toggle input:checked + .debug-toggle__slider {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #898781;
+}
+
+.debug-toggle input:checked + .debug-toggle__slider::before {
+  transform: translateX(12px);
+  background: var(--text);
+}
+
+.terminal-concise {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.terminal-concise__row {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  align-items: baseline;
+}
+
+.terminal-concise__row code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  word-break: break-word;
+}
+
+.terminal-concise__label {
+  flex-shrink: 0;
+  width: 62px;
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.terminal-concise__status--success {
+  color: #0ca30c;
+  font-weight: 600;
+}
+.terminal-concise__status--error {
+  color: #d03b3b;
+  font-weight: 600;
+}
+.terminal-concise__status--running {
+  color: #fab219;
+  font-weight: 600;
+}
+
+.terminal-log {
+  flex: 1;
+  min-height: 0;
+  background: #050b16;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  color: #d1fae5;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --- VS Code Preview & Project Files (shared path label) --- */
+
+.code-preview__path {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-preview__body {
+  flex: 1;
+  min-height: 0;
+  background: #0b1120;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: auto;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  margin: 0;
+}
+
+.code-preview__line {
+  display: flex;
+  gap: 10px;
+  padding: 0 8px;
+  white-space: pre;
+}
+
+.code-preview__line-no {
+  color: var(--text-muted);
+  min-width: 28px;
+  text-align: right;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.code-preview__line--highlight {
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.diff-view__hunk-header {
+  color: var(--text-muted);
+  padding: 4px 8px;
+}
+
+.diff-view__line {
+  display: flex;
+  gap: 8px;
+  padding: 0 8px;
+  white-space: pre;
+}
+
+.diff-view__line-no {
+  color: var(--text-muted);
+  min-width: 24px;
+  text-align: right;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.diff-view__text {
+  white-space: pre;
+}
+
+.diff-view__line--add {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.diff-view__line--remove {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.diff-view__line--ctx {
+  color: var(--text-muted);
+}
+
+.code-preview__footer {
+  display: flex;
+  gap: 16px;
+  padding: 5px 10px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* --- Project Files tree --- */
+
+.file-tree {
+  font-size: 12px;
+}
+
+.file-tree__dir summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px 0;
+  color: var(--text-muted);
+}
+
+.file-tree__dir summary svg {
+  flex-shrink: 0;
+}
+
+.file-tree__children {
+  margin-left: 14px;
+  border-left: 1px dotted var(--border);
+  padding-left: 8px;
+}
+
+.file-tree__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tree__item svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.file-tree__item--active {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.file-tree__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-status-badge {
+  flex-shrink: 0;
+  min-width: 14px;
+  text-align: center;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.git-status-badge--A {
+  background: rgba(12, 163, 12, 0.18);
+  color: #0ca30c;
+}
+.git-status-badge--M {
+  background: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
+}
+.git-status-badge--D {
+  background: rgba(208, 59, 59, 0.18);
+  color: #d03b3b;
+}
+.git-status-badge--\? {
+  background: rgba(137, 135, 129, 0.18);
+  color: #898781;
+}
+
+.file-tree__truncated {
+  color: var(--text-muted);
+}
+
+.flow-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.flow-empty__text {
+  margin: 0;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+/* --- activity node --- */
+
+.activity-node {
+  position: relative;
+  width: 240px;
+  background: var(--bg-elevated);
+  border: 1.5px solid;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.activity-node__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.activity-node__icon {
+  flex-shrink: 0;
+}
+
+.activity-node__label {
+  flex: 1;
+}
+
+.activity-node__time {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.activity-node__detail {
+  margin-top: 4px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "still running…" -- appears below the LAST node when the turn hasn't
+   closed yet, even though the concrete event itself has already finished
+   (see stillWorking in FlowCanvas.jsx/ActivityNode.jsx). Amber color, same
+   as its pulsing ring animation (--pulsing below), so it reads as one
+   unified signal. */
+.activity-node__working {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: #f59e0b;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.activity-node--pulsing {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+}
+
+/* --- Git panel (read-only, see GitPanel.jsx) --- */
+
+.panel--git {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.git-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 10px;
+  flex-shrink: 0;
+}
+
+.git-tabs__tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  padding: 4px 11px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.git-tabs__tab:hover {
+  border-color: #898781;
+  color: var(--text);
+}
+
+.git-tabs__tab--active {
+  background: #60a5fa;
+  border-color: transparent;
+  color: #0b1120;
+  font-weight: 700;
+}
+
+.git-panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.git-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.git-status-list__caption {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.git-status-list__group {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 8px 0 3px;
+}
+.git-status-list__group:first-child {
+  margin-top: 0;
+}
+
+.git-status-list__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  width: 100%;
+}
+
+.git-status-list__row:hover {
+  background: var(--bg-elevated);
+}
+
+.git-status-list__row--static {
+  cursor: default;
+}
+.git-status-list__row--static:hover {
+  background: none;
+}
+
+.git-status-list__path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+}
+
+/* The diff slides in from the left + fades every time the user clicks a
+   new file (Status OR History) -- key={panelKey} in DiffTab remounts this
+   element on every click, so the animation replays each time, not just
+   when the Diff tab is first opened. */
+@keyframes diffFadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.git-diff__panel {
+  animation: diffFadeInLeft 220ms ease-out;
+}
+
+.git-diff__filename {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* Context header -- appears ONLY when the diff shown comes from commit
+   History (not the working tree), so it isn't mistaken for the same live
+   diff as the Status tab (see DiffTab isCommitDiff). */
+.git-diff__commit-context {
+  font-size: 11px;
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.git-diff {
+  margin: 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  white-space: pre;
+  background: #0b1120;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+.git-diff__line {
+  padding: 0 10px;
+}
+
+.git-diff__line--add {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+.git-diff__line--remove {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+.git-diff__line--hunk {
+  color: #60a5fa;
+}
+.git-diff__line--meta {
+  color: var(--text-muted);
+}
+
+.git-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The separator border was moved to .git-log-list__item (not __row) --
+   __row is now a <button> inside __item, which can also hold __files
+   when expanded, so if the border stayed on __row, an expanded row would
+   get visually separated from its own file list by that line. */
+.git-log-list__item {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.git-log-list__item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.git-log-list__row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.git-log-list__row--clickable {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.git-log-list__files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 0 24px;
+}
+
+.git-log-list__files-loading {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 6px 0 0 24px;
+}
+
+.git-log-list__hash {
+  flex-shrink: 0;
+  color: #60a5fa;
+  font-size: 11px;
+  padding-top: 1px;
+}
+
+.git-log-list__subject {
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.git-log-list__meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* --- Legend (color/icon key, collapsible, floating in the corner) --- */
+
+.legend {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* Stacked VERTICALLY directly above the Legend toggle button (not aligned
+   horizontally) -- the Legend toggle's width varies by language
+   ("Keterangan" vs "Legend"), but its HEIGHT is stable (fixed padding,
+   independent of text width), so stacking upward is safer than guessing
+   the width. */
+.scroll-to-top {
+  position: fixed;
+  right: 16px;
+  bottom: 60px;
+  z-index: 21;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s, color 0.15s, background 0.15s;
+}
+.scroll-to-top:hover {
+  background: rgba(96, 165, 250, 0.1);
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+.legend__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.legend__toggle:hover {
+  color: var(--text);
+  border-color: #898781;
+}
+
+.legend__chevron {
+  transition: transform 0.15s ease;
+}
+.legend__chevron--open {
+  transform: rotate(180deg);
+}
+
+.legend__card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  width: 220px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.legend__title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.legend__title--second {
+  margin-top: 10px;
+}
+
+.legend__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.legend__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend__icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* --- HelpGuide -- full documentation modal, see components/HelpGuide.jsx
+   & content/helpGuide.js --- */
+
+.help-guide__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.help-guide__card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 640px;
+  max-width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.help-guide__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.help-guide__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.help-guide__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.help-guide__close:hover {
+  border-color: #898781;
+  color: var(--text);
+}
+
+/* Quick-nav chips -- jump to a section without manual scrolling, this
+   modal is quite long (9 sections). A single horizontal-scroll row was
+   tried, but it looked visually worse (user feedback 2026-09-02) -- reverted
+   to plain flex-wrap. It used to crowd together because the chips used the
+   full `heading` (could be as long as "Access from other devices (LAN)
+   and switching servers"); now it uses the short `navLabel`, so it wraps
+   cleanly with no scrolling needed at all -- the full title is still
+   available via `title` (tooltip). */
+.help-guide__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.help-guide__nav-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.help-guide__nav-chip:hover {
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+.help-guide__body {
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.help-guide__section {
+  margin-bottom: 24px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border);
+  scroll-margin-top: 8px;
+}
+.help-guide__section:last-child {
+  margin-bottom: 0;
+}
+
+.help-guide__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #60a5fa;
+}
+
+.help-guide__heading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(96, 165, 250, 0.12);
+  color: #60a5fa;
+  flex-shrink: 0;
+}
+
+.help-guide__paragraph {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.help-guide__paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.help-guide__steps {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.help-guide__steps li {
+  margin-bottom: 6px;
+}
+.help-guide__steps li:last-child {
+  margin-bottom: 0;
+}
+
+/* "term: description"-based sections (Reading the Dashboard, FAQ) --
+   easier to scan as a list of bold labels + descriptions than as one long
+   running paragraph. */
+.help-guide__items {
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.help-guide__item {
+  margin: 0;
+}
+.help-guide__item-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.help-guide__item-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   RESPONSIVE (tablet & mobile) -- before this the dashboard was PURELY
+   desktop, with not a single @media query (confirmed with the user
+   2026-09-02). The original design assumed ".app{height:100vh}" fits
+   exactly, with each panel scrolling internally on its own (lots of small
+   scrolling boxes) -- that's fine on a wide screen, but becomes an
+   anti-pattern on mobile (nested-scroll-hell, fixed-px columns overflowing
+   horizontally). Strategy here: at narrow breakpoints, SWITCH to a single
+   column stacked vertically, with the PAGE itself scrolling (not each
+   box), individual panels get a max-height so one very long panel doesn't
+   dominate the whole page.
+
+   Two breakpoints:
+     - <=1024px (tablet & narrower): restructure the layout into 1 column.
+     - <=600px (mobile): further adjustments -- smaller padding/font, stat
+       tile 1 column, etc.
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .app {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Tablet/mobile -- revert to the pre-desktop-change behavior: horizontal
+     row, plain icon on the right (tooltip still present), text label
+     hidden -- DELIBERATELY kept this way at this size (user 2026-09-03:
+     "keep it that way for mobile"). */
+  .recent-sessions__row {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+  .recent-sessions__row-main {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .recent-sessions__delete-icon {
+    display: block;
+  }
+  .recent-sessions__delete-label {
+    display: none;
+  }
+  .recent-sessions__delete {
+    padding: 0;
+    margin: 0 4px 0 0;
+    width: 24px;
+    height: 24px;
+    justify-content: center;
+  }
+  .recent-sessions__confirm-actions {
+    margin: 0 4px 0 0;
+  }
+
+  .app__content {
+    flex-direction: column;
+    overflow: visible;
+    /* The left/bottom border used to frame the whole canvas as ONE
+       full-width row (see the other .app__content note in this file) --
+       once it's a single stacked column, that "frame" no longer applies
+       (every section is already full-width on its own). */
+    border-left: none;
+    border-bottom: none;
+  }
+
+  .app__body {
+    flex: none;
+    overflow: visible;
+  }
+
+  .app__grid,
+  .app__grid--bottom {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    overflow: visible;
+  }
+
+  .panel {
+    max-height: 70vh;
+  }
+
+  /* Activity Flow: list (left) + graph (right) becomes list (top) + graph
+     (bottom) -- both need an explicit height because without a parent that
+     has a definite height (previously from flex:1 in the wide row), both
+     would collapse to 0px. */
+  .flow-panel__body {
+    flex-direction: column;
+  }
+  .event-list {
+    width: 100%;
+    max-height: 240px;
+  }
+  .flow-panel__graph {
+    /* `flex: 0 0 320px` (NOT just `min-height`) -- confirmed directly via
+       the console (React Flow error #004, user report 2026-09-03):
+       `min-height` inside a flex-grow container (flex:1 from the base
+       rule) only RESOLVES AFTER one layout pass, and React Flow measures
+       its container BEFORE that finishes -- gets 0px, then stops rendering
+       permanently (doesn't auto-recover even once the container later gets
+       the right size, confirmed that an extra ResizeObserver alone isn't
+       enough). `flex: 0 0 320px` gives a DEFINITE size from the very first
+       layout pass, independent of any flex-grow calculation at all. */
+    flex: 0 0 320px;
+    height: 320px;
+  }
+
+  /* React Flow's MiniMap has a FIXED size (default ~200x150px, not
+     responsive) -- in a graph container this size (320px tall at this
+     breakpoint), it eats up a large portion of the screen and covers the
+     actual nodes (user report 2026-09-03, appeared as an "empty dark box"
+     since its color matches --bg-elevated). Shrunk here (tablet),
+     hidden entirely at the mobile breakpoint (600px) below -- the space
+     there is even tighter, and the minimap becomes even less useful on a
+     screen that small.
+  */
+  .react-flow__minimap {
+    width: 100px !important;
+    height: 75px !important;
+  }
+
+  .chat-panel {
+    width: 100%;
+    flex: none;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    height: 60vh;
+    min-height: 360px;
+  }
+
+  /* Control rows that previously assumed enough width to stay in a single
+     horizontal line (status bar, session picker, tab bar) -- let them wrap
+     to a new line instead of overflowing/getting cut off. */
+  .status-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .session-picker {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .session-picker__form {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .git-tabs {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .status-bar {
+    gap: 10px;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .panel {
+    padding: 10px 12px;
+  }
+
+  .stat-grid {
+    /* 2-column stat tiles become very cramped at mobile width (<=600px) --
+       1 column is more readable than forcing 2 columns with cut-off content. */
+    grid-template-columns: 1fr;
+  }
+
+  .flow-panel__graph {
+    /* Same reasoning as the 1024px breakpoint above -- a fixed `flex`,
+       not just `min-height`, so React Flow never measures a 0px container
+       on the first pass. */
+    flex: 0 0 260px;
+    height: 260px;
+  }
+
+  /* Hidden entirely (not just shrunk like at the 1024px tablet breakpoint)
+     -- mobile screen space is much tighter, the minimap becomes less
+     useful than the nodes it would cover. */
+  .react-flow__minimap {
+    display: none !important;
+  }
+
+  .event-list {
+    max-height: 200px;
+  }
+
+  .chat-panel {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .session-picker__input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Mobile screens are already narrow -- the full host label (e.g.
+     "192.168.1.50:4000") would just get uselessly cut off here, so it
+     falls back to a plain icon (tooltip & popover still work, just needs
+     1 tap). */
+  .server-switcher__toggle {
+    padding: 0;
+    width: 26px;
+    justify-content: center;
+  }
+  .server-switcher__host-label {
+    display: none;
+  }
+
+  /* Legend floating in the corner -- nudged in & shrunk a bit so it
+     doesn't eat too much of the already-narrow mobile screen width. */
+  .legend {
+    right: 10px;
+    bottom: 10px;
+  }
+  .scroll-to-top {
+    right: 10px;
+    bottom: 54px;
+  }
+
+  /* Approval card & notification banners -- a flex row with several
+     children (icon, body, timeout, buttons) that fit fine on wide desktop
+     screens but can get cut off/overlap on mobile. Let them wrap to a new
+     line. */
+  .permission-card,
+  .notification-banner,
+  .server-switch-notice {
+    flex-wrap: wrap;
+  }
+  .permission-card__actions {
+    margin-left: auto;
+  }
+
+  .help-guide__overlay {
+    padding: 10px;
+  }
+  .help-guide__header,
+  .help-guide__body,
+  .help-guide__nav {
+    padding: 14px;
+  }
+}

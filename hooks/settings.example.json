@@ -1,0 +1,57 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js session-start" }] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js thinking" }] }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js pre-edit" },
+          { "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/request-permission.js" }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js file-read" }]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js terminal-start" },
+          { "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/request-permission.js" }
+        ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          { "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js terminal-start" },
+          { "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/request-permission.js" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js post-edit" }]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js terminal-complete" }]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js terminal-complete" }]
+      }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js complete" }] }
+    ],
+    "Notification": [
+      { "hooks": [{ "type": "command", "command": "node <PATH_TO_THIS_PROJECT>/hooks/emit-event.js notification" }] }
+    ]
+  }
+}

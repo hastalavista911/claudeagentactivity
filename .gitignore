@@ -1,0 +1,28 @@
+node_modules/
+server.log
+dashboard.log
+mock-agent.log
+hooks/debug.log
+dashboard/dist/
+vscode-extension/node_modules/
+vscode-extension/.vscode-test/
+
+# Project-level Claude Code settings -- berisi path personal mesin
+# pengembang (mis. C:\Users\<nama>\AppData\Local\Temp\...) & daftar command
+# yang di-auto-approve dari sesi kerja lokal, bukan konfigurasi yang
+# relevan buat orang lain yang clone repo ini. Beda dari hooks/settings.example.json
+# (itu TEMPLATE buat user pasang di ~/.claude/settings.json GLOBAL mereka
+# sendiri -- tetap di-commit).
+.claude/
+
+# Environment file asli (kalau ada) -- .env.example tetap di-commit sebagai
+# template, .env sungguhan (potensial berisi override lokal) tidak.
+.env
+dashboard/.env
+
+# Catatan perencanaan internal -- bukan bagian dari aplikasi (kode/dokumentasi
+# pemakai), tidak perlu ikut dipublikasikan.
+project-brief/
+
+# PAT (Personal Access Token) GitHub -- CREDENTIAL, jangan pernah ikut ter-commit.
+pat/

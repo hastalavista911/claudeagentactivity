@@ -1,0 +1,41 @@
+{
+  "name": "agent-activity-visualizer",
+  "publisher": "local-dev",
+  "displayName": "AI Agent Activity Visualizer",
+  "description": "Highlight file/line yang sedang dikerjakan Claude Code, berdasarkan event dari Agent Server (lihat project-brief/architecture-design.md).",
+  "version": "0.0.1",
+  "private": true,
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "agentVisualizer.reconnect", "title": "Agent Visualizer: Reconnect to Agent Server" },
+      { "command": "agentVisualizer.focusActiveFile", "title": "Agent Visualizer: Buka File yang Sedang Dikerjakan Agent" }
+    ],
+    "views": {
+      "explorer": [
+        { "id": "agentVisualizer.activityView", "name": "Agent Activity", "type": "webview" }
+      ]
+    },
+    "configuration": {
+      "title": "AI Agent Activity Visualizer",
+      "properties": {
+        "agentVisualizer.httpUrl": {
+          "type": "string",
+          "default": "http://localhost:4000",
+          "description": "Base URL HTTP Agent Server (dipakai untuk backfill riwayat event saat extension aktif)."
+        },
+        "agentVisualizer.wsUrl": {
+          "type": "string",
+          "default": "ws://localhost:4000",
+          "description": "URL WebSocket Agent Server."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
