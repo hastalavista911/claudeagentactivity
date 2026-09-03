@@ -31,7 +31,14 @@ const app = express();
 // for trusted consumers, so CORS is left permissive (not a public API).
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  // DELETE added for "Clear this session" (RecentSessionsList.jsx) -- without
+  // it here, the browser's CORS preflight (OPTIONS) rejects the real DELETE
+  // before it ever reaches app.delete("/sessions/:id"), and fetch() throws a
+  // CORS error client-side. RecentSessionsList's catch{} swallows that
+  // silently, which is exactly why it looked like clicking "Yes, hapus" did
+  // nothing at all (user report 2026-09-03) -- the request never even left
+  // the browser, so no amount of client-side fixing there could have helped.
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
