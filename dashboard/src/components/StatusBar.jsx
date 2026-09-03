@@ -195,56 +195,71 @@ export default function StatusBar({
 
   return (
     <div>
+      {/* Reorganized into 2 stacked rows by information type (previously ONE
+          long flex row of ~12 mixed items that only wrapped organically,
+          producing an unpredictable/messy line-break order at narrow
+          widths -- user report 2026-09-03, screenshot showed items broken
+          up mid-group with an oddly empty row). A 3-row version (brand /
+          live status / context each on their own line) was tried first,
+          but it made the whole header noticeably taller -- reverted back
+          to 2 rows (user report 2026-09-03: "terlalu tinggi"), file/model
+          folded back into the same row as the live status items instead of
+          getting a dedicated row:
+            1. brand + global app-level controls (title, language, help)
+            2. session status + context (connection/session/status/
+               duration/event count/file/model) + actions (server, export)
+          Items within a row sit right next to each other (NOT pushed to
+          the row's far right edge) -- an earlier version used a flex
+          spacer to shove controls all the way to the right, which left a
+          large empty gap in the middle on wide screens and made the bar
+          look stretched/too wide (user report 2026-09-03). */}
       <header className="status-bar">
-        <div className="status-bar__title">{t("common.appTitle")}</div>
-
-        <div className="status-bar__item">
-          <span className="status-dot" style={{ backgroundColor: CONNECTION_COLOR[connectionStatus] }} />
-          {CONNECTION_LABEL_KEY[connectionStatus] ? t(CONNECTION_LABEL_KEY[connectionStatus]) : connectionStatus}
-        </div>
-
-        <div className="status-bar__item">
-          session: <code>{sessionId ? sessionId.slice(0, 8) : t("common.dash")}</code>
-        </div>
-
-        <div className="status-bar__item">
-          status: <span className="status-badge">{status ?? t("common.dash")}</span>
-        </div>
-
-        <div className="status-bar__item" title={activeFile ?? ""}>
-          file: <code>{activeFile ? shortenPath(activeFile, 28) : t("common.dash")}</code>
-        </div>
-
-        <div className="status-bar__item">duration: {formatDuration(duration)}</div>
-
-        <div className="status-bar__item status-bar__item--grow">{eventCount} event</div>
-
-        <div className="status-bar__item">model: {usage?.model?.replace("claude-", "") ?? t("common.dash")}</div>
-
-        <ServerSwitcher />
-        <LanguageSwitcher />
-
-        {events && events.length > 0 && (
-          <button type="button" className="status-bar__export" onClick={handleExportReport}>
-            <Download size={13} strokeWidth={2} /> {t("statusBar.exportReport")}
+        <div className="status-bar__row status-bar__row--top">
+          <div className="status-bar__title">{t("common.appTitle")}</div>
+          <ServerSwitcher />
+          <LanguageSwitcher />
+          <span className="status-bar__version">v{appVersion}</span>
+          <button
+            type="button"
+            className="status-bar__help"
+            onClick={() => setHelpOpen(true)}
+            title={t("statusBar.help.tooltip")}
+            aria-label={t("statusBar.help.tooltip")}
+          >
+            <HelpCircle size={13} strokeWidth={2} /> {t("statusBar.help.label")}
           </button>
-        )}
+        </div>
 
-        {/* Moved to the far right (previously next to the title on the
-            left) + given a text label "Help" instead of just a bare "?"
-            icon -- user request 2026-09-03. The app version sits next to
-            it, not inside the button itself -- so it's visible at a glance
-            without needing to click anything. */}
-        <span className="status-bar__version">v{appVersion}</span>
-        <button
-          type="button"
-          className="status-bar__help"
-          onClick={() => setHelpOpen(true)}
-          title={t("statusBar.help.tooltip")}
-          aria-label={t("statusBar.help.tooltip")}
-        >
-          <HelpCircle size={13} strokeWidth={2} /> {t("statusBar.help.label")}
-        </button>
+        <div className="status-bar__row status-bar__row--live">
+          <div className="status-bar__item">
+            <span className="status-dot" style={{ backgroundColor: CONNECTION_COLOR[connectionStatus] }} />
+            {CONNECTION_LABEL_KEY[connectionStatus] ? t(CONNECTION_LABEL_KEY[connectionStatus]) : connectionStatus}
+          </div>
+
+          <div className="status-bar__item">
+            session: <code>{sessionId ? sessionId.slice(0, 8) : t("common.dash")}</code>
+          </div>
+
+          <div className="status-bar__item">
+            status: <span className="status-badge">{status ?? t("common.dash")}</span>
+          </div>
+
+          <div className="status-bar__item">duration: {formatDuration(duration)}</div>
+
+          <div className="status-bar__item">{eventCount} event</div>
+
+          <div className="status-bar__item" title={activeFile ?? ""}>
+            file: <code>{activeFile ? shortenPath(activeFile, 28) : t("common.dash")}</code>
+          </div>
+
+          <div className="status-bar__item">model: {usage?.model?.replace("claude-", "") ?? t("common.dash")}</div>
+
+          {events && events.length > 0 && (
+            <button type="button" className="status-bar__export" onClick={handleExportReport}>
+              <Download size={13} strokeWidth={2} /> {t("statusBar.exportReport")}
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="session-picker">

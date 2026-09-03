@@ -71,10 +71,15 @@
 
 /* --- status bar --- */
 
+/* Stacked rows (not one long flex row) -- each row groups items by
+   information type (brand/controls, live session status, secondary
+   context) and wraps independently, so a narrow viewport breaks between
+   groups instead of splitting a group up mid-way (see the JSX comment in
+   StatusBar.jsx for the reasoning -- user report 2026-09-03). */
 .status-bar {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: 6px;
   padding: 10px 16px;
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
@@ -82,9 +87,16 @@
   flex-shrink: 0;
 }
 
+.status-bar__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
 .status-bar__title {
   font-weight: 600;
-  margin-right: 8px;
 }
 
 .status-bar__version {
@@ -119,13 +131,6 @@
   gap: 6px;
   color: var(--text-muted);
   white-space: nowrap;
-}
-
-.status-bar__item--grow {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .status-bar__export {
@@ -3279,10 +3284,11 @@
   }
 
   /* Control rows that previously assumed enough width to stay in a single
-     horizontal line (status bar, session picker, tab bar) -- let them wrap
-     to a new line instead of overflowing/getting cut off. */
+     horizontal line (session picker, tab bar) -- let them wrap to a new
+     line instead of overflowing/getting cut off. (.status-bar itself
+     already wraps at every width now -- it's a column of grouped rows,
+     see the rule near the top of this file.) */
   .status-bar {
-    flex-wrap: wrap;
     row-gap: 8px;
   }
   .session-picker {
