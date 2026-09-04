@@ -30,14 +30,30 @@ export default function EventListView({ events, explicitSelectedIndex, onSelect,
   // "following" the latest event by default, same as FlowCanvas.
   const isNearBottomRef = useRef(true);
   const prevLengthRef = useRef(0);
+  // Set right before WE move `el.scrollTop` ourselves (scroll-to-selection
+  // effect below) -- lets the scroll listener tell "the user just scrolled
+  // by hand" apart from "that scroll was our own doing", see both effects below.
+  const suppressScrollRecalcRef = useRef(false);
 
-  // Updates "is the user near the bottom" every time they scroll manually
-  // -- as soon as they scroll up to read older history, auto-scroll STOPS
-  // interrupting until they scroll back down themselves.
+  // Updates "is the user near the bottom" on every REAL scroll -- as soon
+  // as they scroll up to read older history, auto-scroll STOPS
+  // interrupting until they scroll back down themselves (by hand OR by
+  // clicking the last row again, see the effects below).
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     function handleScroll() {
+      // This scroll event was fired by OUR OWN `el.scrollTop = ...` in the
+      // scroll-to-selection effect, not the user's hand -- skip recomputing
+      // once, so it can't silently overwrite whatever isNearBottomRef was
+      // already correctly set to. Without this, clicking an OLDER row that
+      // happens to land near the bottom would flip isNearBottomRef back to
+      // true, and the very next live event would immediately drag the list
+      // back down before the user got to see the row they just clicked.
+      if (suppressScrollRecalcRef.current) {
+        suppressScrollRecalcRef.current = false;
+        return;
+      }
       const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
       isNearBottomRef.current = distanceFromBottom < 60;
     }
@@ -47,35 +63,25 @@ export default function EventListView({ events, explicitSelectedIndex, onSelect,
 
   // Auto-scroll to the bottom if: (a) this just got filled in for the
   // first time from empty (starting to watch a new session -- always
-  // scroll, ignore any old follow status), or (b) the user genuinely is
-  // near the bottom when a new event arrives.
-  //
-  // `explicitSelectedIndex` is checked DIRECTLY here (not just trusting
-  // isNearBottomRef) -- the root cause of a bug where "the first click
-  // scrolls, the next click does nothing": the scroll-to-selection effect
-  // below sets `el.scrollTop` programmatically to highlight the newly
-  // selected row, BUT that also triggers a REAL browser 'scroll' event
-  // (the listener above can't tell a programmatic scroll apart from the
-  // user's own hand-scrolling) -- if the highlighted row happened to be
-  // near the bottom of the list AT THAT MOMENT, that listener would
-  // silently flip isNearBottomRef back to true, and the NEXT live event
-  // (this kind of session very often gets a new event every 1-2 seconds)
-  // would immediately drag the list back down before the user even got to
-  // see the result of their click -- looking like "the next click didn't
-  // scroll" when it actually DID scroll and then got reset. Checking the
-  // prop directly (the source of truth, which the scroll listener can't
-  // "hijack") removes this race entirely.
+  // scroll, ignore any old follow status), or (b) the user is currently
+  // near the bottom when a new event arrives -- purely based on the REAL
+  // physical scroll position (isNearBottomRef), nothing else. Previously
+  // this also permanently blocked auto-scroll for as long as an OLDER row
+  // stayed selected (even long after the user scrolled back down by hand),
+  // so a newly running "current" activity could stay invisible until a
+  // manual scroll -- user report 2026-09-04. isNearBottomRef alone is now
+  // reliable (see suppressScrollRecalcRef above), so that extra guard isn't
+  // needed anymore.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const isFreshLoad = prevLengthRef.current === 0 && indexes.length > 0;
-    const hasOlderExplicitSelection = explicitSelectedIndex != null && explicitSelectedIndex !== events.length - 1;
-    if (!hasOlderExplicitSelection && (isFreshLoad || isNearBottomRef.current)) {
+    if (isFreshLoad || isNearBottomRef.current) {
       el.scrollTop = el.scrollHeight;
       isNearBottomRef.current = true;
     }
     prevLengthRef.current = indexes.length;
-  }, [indexes.length, explicitSelectedIndex, events.length]);
+  }, [indexes.length, events.length]);
 
   // The selection changed -- either via clicking THIS ROW ITSELF, OR via
   // clicking a node in FlowCanvas (both go through the same store
@@ -94,10 +100,14 @@ export default function EventListView({ events, explicitSelectedIndex, onSelect,
     const viewTop = el.scrollTop;
     const viewBottom = viewTop + el.clientHeight;
     if (rowTop < viewTop || rowBottom > viewBottom) {
+      suppressScrollRecalcRef.current = true; // this scroll is US, not the user -- see the listener above
       el.scrollTop = rowTop - el.clientHeight / 2 + rowEl.offsetHeight / 2; // center it, not flush against the edge
     }
-    // If the selected one is the LAST event, treat the user as having gone back to "following" live.
-    isNearBottomRef.current = explicitSelectedIndex === events.length - 1;
+    // If the selected one is the LAST event, treat the user as having gone
+    // back to "following" live -- otherwise leave isNearBottomRef exactly
+    // as it already was (the click itself didn't change the real scroll
+    // position, so it shouldn't force-flip the follow state either way).
+    if (explicitSelectedIndex === events.length - 1) isNearBottomRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [explicitSelectedIndex]);
 
@@ -140,7 +150,13 @@ export default function EventListView({ events, explicitSelectedIndex, onSelect,
                 {info.auto ? <span className="badge-auto">{t("event.autoBadge")}</span> : null}
                 {isLast ? <span className="event-list__current-badge">{t("activityFlow.current")}</span> : null}
               </span>
-              <span className="event-list__time">{formatTimeMaybeDate(event.timestamp)}</span>
+              {/* Hidden when this row is CURRENT -- the "current" badge sits
+                  in the same narrow row and the two were overlapping/
+                  getting cut off against each other at this row width (user
+                  report 2026-09-04, screenshot showed the badge run over by
+                  the timestamp). The full timestamp is still available via
+                  the row's `title` tooltip above. */}
+              {!isLast && <span className="event-list__time">{formatTimeMaybeDate(event.timestamp)}</span>}
             </button>
           );
         })
