@@ -58,6 +58,17 @@ const REQUIRED_HOOKS = [
   { event: "PostToolUse", matcher: "PowerShell", command: hookCommand("hooks/emit-event.js", "terminal-complete") },
   { event: "Stop", matcher: null, command: hookCommand("hooks/emit-event.js", "complete") },
   { event: "Notification", matcher: null, command: hookCommand("hooks/emit-event.js", "notification") },
+  // Read-only visibility for AskUserQuestion (the radio-button multi-choice
+  // prompts Claude asks the user directly) -- user request 2026-09-04,
+  // deliberately scoped to observability ONLY: no request-permission.js
+  // entry here at all, so Command Approval mode (Off/Manual/Auto) has ZERO
+  // effect on these -- Auto must never silently pick an answer for the
+  // user, that would defeat the whole point of the tool. Also technically
+  // not possible even if wanted: a PreToolUse hook can only return
+  // allow/deny/ask, there's no mechanism to inject a chosen answer back
+  // into the tool call.
+  { event: "PreToolUse", matcher: "AskUserQuestion", command: hookCommand("hooks/emit-event.js", "ask-question") },
+  { event: "PostToolUse", matcher: "AskUserQuestion", command: hookCommand("hooks/emit-event.js", "answer-question") },
 ];
 
 function settingsPath() {

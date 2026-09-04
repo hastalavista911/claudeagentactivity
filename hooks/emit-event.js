@@ -6,9 +6,11 @@
 // STATUS: ACTIVE for this project via .claude/settings.json (see project root).
 // Already validated against a real Claude Code session -- every event type
 // (session-start, thinking, pre-edit, post-edit, file-read, terminal-start,
-// terminal-complete, complete) has had its structure checked via
-// EMIT_EVENT_DEBUG=1 mode and matches mapToEvent() below. If Claude Code's
-// version changes, redo that check before trusting it again.
+// terminal-complete, complete, ask-question, answer-question) has had its
+// structure checked (the last two via a real AskUserQuestion call,
+// 2026-09-04, the rest via EMIT_EVENT_DEBUG=1 mode) and matches
+// mapToEvent() below. If Claude Code's version changes, redo that check
+// before trusting it again.
 //
 // EXCEPT "notification" (the case below) -- that one has NEVER been
 // verified against a real permission-request scenario, see the comment in
@@ -234,6 +236,38 @@ function mapToEvent(kind, hookPayload) {
       };
     case "complete":
       return { ...base, type: "agent.complete", payload: { status: "success" } };
+    case "ask-question":
+      // Read-only visibility for AskUserQuestion (user request 2026-09-04)
+      // -- confirmed against a REAL call the same day (not just the tool's
+      // documented schema): tool_input really does carry
+      // { questions: [{ question, header, options: [{label, ...}] }] }.
+      // Deliberately no request-permission.js entry for this matcher at
+      // all -- see the note in server/hooks-setup.js for why Command
+      // Approval must never touch this.
+      return {
+        ...base,
+        type: "agent.question",
+        payload: {
+          status: "asked",
+          questions: (hookPayload.tool_input?.questions ?? []).map((q) => ({
+            header: q.header ?? null,
+            question: q.question ?? null,
+            options: (q.options ?? []).map((o) => o.label).filter(Boolean),
+          })),
+        },
+      };
+    case "answer-question":
+      // Also confirmed against the same real call -- tool_response really
+      // does carry `answers` keyed by the exact question text (matches
+      // "questions" above 1:1), value = the selected option's label.
+      return {
+        ...base,
+        type: "agent.question",
+        payload: {
+          status: "answered",
+          answers: hookPayload.tool_response?.answers ?? null,
+        },
+      };
     case "notification":
       // NOT YET verified via EMIT_EVENT_DEBUG against a real
       // permission-request scenario (unlike the other hooks in this file,

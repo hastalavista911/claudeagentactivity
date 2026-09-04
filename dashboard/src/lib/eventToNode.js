@@ -56,6 +56,30 @@ export function describeEvent(event) {
       // components/NotificationBanner.jsx for its banner. Not an
       // approve/reject request, just an "Claude Code needs your attention" info.
       return { category, variant: "info", labelKey: "event.notification", detail: payload.message ?? "" };
+    case "agent.question": {
+      // AskUserQuestion -- read-only visibility only (see the note in
+      // server/hooks-setup.js), never gated by Command Approval. "asked"
+      // and "answered" are TWO separate events (same pattern as
+      // terminal.start/terminal.complete), not one node that updates in place.
+      if (payload.status === "answered") {
+        const answers = payload.answers && typeof payload.answers === "object" ? Object.values(payload.answers) : [];
+        return {
+          category,
+          variant: "success",
+          labelKey: "event.questionAnswered",
+          detail: answers.join(", "),
+        };
+      }
+      const questions = payload.questions ?? [];
+      const first = questions[0];
+      return {
+        category,
+        variant: "running",
+        labelKey: "event.questionAsked",
+        labelSuffix: questions.length > 1 ? ` (${questions.length})` : "",
+        detail: first?.question ?? "",
+      };
+    }
     case "chat.message":
       // A message from a chat started directly in the dashboard
       // (server/chat.js) -- the full content is shown in ChatPanel, here it
